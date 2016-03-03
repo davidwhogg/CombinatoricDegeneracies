@@ -18,7 +18,7 @@ def choose(N, M):
     """
     return factorial(N) / factorial(M) / factorial(N-M)
 
-def get_log_likelihood(M, K, D, variance_scale=(1./256.), ndof=None):
+def get_log_likelihood(M, K, D, ivar_scale=256., ndof=None):
     """
     Build a log likelihood function for a problem with `K` pigeons,
     each of which gets put in one of `M` holes, each of which has `D`
@@ -47,25 +47,23 @@ def get_log_likelihood(M, K, D, variance_scale=(1./256.), ndof=None):
         ndof = D + 2 # MAGIC
     for m in range(M):
         vecs = np.random.normal(size=(ndof, D)) # more MAGIC
-        ivars[m] = variance_scale * np.mean(vecs[:, :, None] * vecs[:, None, :], axis=0)
+        ivars[m] = ivar_scale * np.mean(vecs[:, :, None] * vecs[:, None, :], axis=0)
     print(amps, means, ivars)
 
-    print([(q, factorial(q), choose(10, q+1)) for q in range(10)])
-
-    assert False
-
     # create mixture of M-choose-K times K! Gaussians (OMG!)
-    Kfac = sum([1 for q in it.permutations(ks)]) # HACKETY HACK
+    Kfac = factorial(K)
+    McKKfac = choose(M, K) * Kfac
     KD = K * D
-    bigamps = np.zeros(Kfac)
-    bigmeans = np.zeros((Kfac, KD))
-    bigivars = np.zeros((Kfac, KD, KD))
-    for i, p in enumerate(it.permutations(ks)):
-        bigamps[i] = np.prod(amps)
-        for k in ks:
+    bigamps = np.zeros(McKKfac)
+    bigmeans = np.zeros((McKKfac, KD))
+    bigivars = np.zeros((McKKfac, KD, KD))
+    for i, p in enumerate(it.permutations(range(M), K)):
+        bigamps[i] = 1.
+        for k in range(K):
+            bigamps[i] *= amps[p[k]]
             bigmeans[i, k * D : k * D + D] = means[p[k]]
             bigivars[i, k * D : k * D + D, k * D : k * D + D] = ivars[p[k]]
-    print(bigamps, bigmeans, bigivars)
+    print(bigamps)
 
     def ln_like(pars):
         # return mixture_of_gaussians(bigamps, bigmeans, bigivars)
