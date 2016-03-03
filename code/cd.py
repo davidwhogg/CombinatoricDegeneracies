@@ -6,31 +6,55 @@ Copyright 2016 David W. Hogg & Dan Foreman-Mackey.
 import itertools as it
 import numpy as np
 
-def get_log_likelihood(K, D):
+def factorial(N):
+    if N == 0:
+        return 1
+    assert N > 0
+    return np.prod(range(1, N+1))
+
+def choose(N, M):
     """
-    Build a log likelihood function for a problem with `K` words, each
-    of which has `D` adjustable parameters.  The output function will
-    take as input a numpy array with `K*D` elements.
+    bad implementation
+    """
+    return factorial(N) / factorial(M) / factorial(N-M)
+
+def get_log_likelihood(M, K, D, variance_scale=(1./256.), ndof=None):
+    """
+    Build a log likelihood function for a problem with `K` pigeons,
+    each of which gets put in one of `M` holes, each of which has `D`
+    adjustable parameters.  The output function will take as input a
+    numpy array with `K*D` elements.
+
+    ## notes:
+    - Makes amplitudes from a flat-in-log pdf.
+    - Makes means from a unit-variance Gaussian.
+    - Makes inverse variances from a mean of outer products of things.
+
+    ## bugs:
+    - Should take random state as input.
+    - Magic numbers and decisions galore.
+    - Doesn't work yet.
     """
     assert int(K) > 0
     assert int(D) > 0
-    if K > 8:
-        print("get_log_likelihood(): seriously? you want K = ", K)
-        assert False
+    assert M > K
 
-    # create K D-space Gaussians
-    amps = np.ones(K)
-    means = np.zeros((K, D))
-    ivars = np.zeros((K, D, D))
-    ds = np.arange(D)
-    ks = np.arange(K)
-    for d in ds:
-        means[ks, d] = np.sin(np.pi * ks * (d + 1.) / (2. * K))
-    for k in ks:
-        ivars[k] = 2. ** (8. - k) * np.eye(D)
+    # create M D-space Gaussians
+    amps = np.exp(np.random.uniform(size=M)) # MAGIC decision
+    means = np.random.normal(size=(M, D)) # more MAGIC
+    ivars = np.zeros((M, D, D))
+    if ndof is None:
+        ndof = D + 2 # MAGIC
+    for m in range(M):
+        vecs = np.random.normal(size=(ndof, D)) # more MAGIC
+        ivars[m] = variance_scale * np.mean(vecs[:, :, None] * vecs[:, None, :], axis=0)
     print(amps, means, ivars)
 
-    # create mixture of K! Gaussians (OMG crap!)
+    print([(q, factorial(q), choose(10, q+1)) for q in range(10)])
+
+    assert False
+
+    # create mixture of M-choose-K times K! Gaussians (OMG!)
     Kfac = sum([1 for q in it.permutations(ks)]) # HACKETY HACK
     KD = K * D
     bigamps = np.zeros(Kfac)
@@ -49,4 +73,4 @@ def get_log_likelihood(K, D):
     return ln_like
 
 if __name__ == "__main__":
-    ln_like = get_log_likelihood(3, 1)
+    ln_like = get_log_likelihood(7, 5, 3)
