@@ -4,8 +4,11 @@ Copyright 2016 David W. Hogg & Dan Foreman-Mackey.
 
 # to-do list:
 - Make multiply function that can multiply the likelihood function by a prior.
-- Figure out how to visualize things.
-- Write sampling code.
+- Write code to return a marginalized likelihood, given a prior.
+- Write exact-sampling code.
+
+# notes / bugs:
+- The zero covariance across modes (block-diagonality) is baked-in.
 """
 
 import itertools as it
@@ -152,7 +155,7 @@ def hogg_savefig(fn):
 if __name__ == "__main__":
     M, K, D = 4, 3, 2
     ln_like = get_log_likelihood(M, K, D)
-    xds = np.arange(-2., 2., 0.01)
+    xds = np.arange(-3., 3., 0.01)
     xs = np.zeros((len(xds), K * D))
     xs[:,0] = xds
     ln_Ls = np.array([ln_like(x) for x in xs])
