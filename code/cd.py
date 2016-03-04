@@ -3,7 +3,6 @@ This file is part of the CombinatoricDegeneracies project.
 Copyright 2016 David W. Hogg & Dan Foreman-Mackey.
 
 # to-do list:
-- Make multiply function that can multiply the likelihood function by a prior.
 - Write code to return a marginalized likelihood, given a prior.
 - Write exact-sampling code.
 
@@ -41,7 +40,7 @@ class mixture_of_gaussians:
     def __init__(self, amps, means, vars, ivars):
         self.K = len(amps)
         assert amps.shape == (self.K,)
-        assert np.all(amps > 0.)
+        assert np.all(amps >= 0.)
         self.amps = amps
         KK, D = means.shape
         assert KK == self.K
@@ -61,17 +60,45 @@ class mixture_of_gaussians:
             assert s > 0.
             self.logdets[k] = logdet
 
+    def __mul__(self, other):
+        """
+        multiply one by another!
+
+        ## bugs:
+        - Not properly checked or tested.
+        """
+        assert self.D == other.D
+        newK = self.K * other.K
+        newamps = np.zeros(newK)
+        newmeans = np.zeros((newK, self.D))
+        newvars = np.zeros((newK, self.D, self.D))
+        newivars = np.zeros((newK, self.D, self.D))
+        for k,(sk,ok) in enumerate(it.product(range(self.K), range(other.K))):
+            # following https://www.cs.nyu.edu/~roweis/notes/gaussid.pdf
+            newivars[k] = self.ivars[sk] + other.ivars[ok]
+            newvars[k] = np.linalg.inv(newivars[k])
+            newvars[k] = 0.5 * (newvars[k] + newvars[k].T) # symmetrize
+            newmeans[k] = np.dot(newvars[k], (np.dot(self.ivars[sk], self.means[sk]) +
+                                              np.dot(other.ivars[ok], other.means[ok])))
+            s, newlogdet = np.linalg.slogdet(newvars[k])
+            assert s > 0.
+            newlogamp = np.log(self.amps[sk]) + np.log(other.amps[ok]) - 0.5 * self.D * np.log(np.pi) \
+                + 0.5 * newlogdet - 0.5 * self.logdets[sk] - 0.5 * other.logdets[ok] \
+                - 0.5 * np.dot(self.means[sk],  np.dot(self.ivars[sk],  self.means[sk])) \
+                - 0.5 * np.dot(other.means[ok], np.dot(other.ivars[ok], other.means[ok])) \
+                + 0.5 * np.dot(newmeans[k], np.dot(newivars[k], newmeans[k]))
+            newamps[k] = np.exp(newlogamp)
+        return mixture_of_gaussians(newamps, newmeans, newvars, newivars)
+
     def log_value(self, x):
         """
         log as in ln
         """
         assert x.shape == self.means[0].shape
-        vals = np.zeros(self.K)
+        vals = np.log(self.amps) - 0.5 * self.D * np.log(np.pi) - 0.5 * self.logdets
         for k in range(self.K):
             delta = x - self.means[k]
-            vals[k] += np.log(self.amps[k])
-            vals[k] += -0.5 * np.dot(delta, np.dot(self.ivars[k], delta))
-            vals[k] += -0.5 * self.logdets[k]
+            vals[k] += -0.5 * np.dot(delta, np.dot(self.ivars[k], delta)) # chi-squared term
         return logsumexp(vals)
 
     def log_marginalized_value(self, d, xd):
@@ -82,12 +109,10 @@ class mixture_of_gaussians:
         ## notes:
         - Check out `var` not `ivar`.
         """
-        vals = np.zeros(self.K)
+        vals = np.log(self.amps) - np.log(np.pi) - 0.5 * np.log(self.vars[:, d, d])
         for k in range(self.K):
             delta = xd - self.means[k, d]
-            vals[k] += np.log(self.amps[k])
             vals[k] += -0.5 * delta * delta / self.vars[k, d, d]
-            vals[k] += -0.5 * np.log(self.vars[k, d, d])
         return logsumexp(vals)
 
     def __call__(self, x, d=None):
@@ -148,22 +173,39 @@ def get_log_likelihood(M, K, D, ivar_scale=256., ndof=None):
 
     return mixture_of_gaussians(bigamps, bigmeans, bigvars, bigivars)
 
+def get_log_prior(KD):
+    """
+    Return a "spherical" 1-Gaussian, `KD`-dimensional prior.
+    """
+    bigamps = np.ones((1,))
+    bigmeans = np.ones((1, KD))
+    foo = 100.
+    bigvars = foo * np.eye(KD).reshape((1, KD, KD))
+    bigivars = (1. / foo) * np.eye(KD).reshape((1, KD, KD))
+    return mixture_of_gaussians(bigamps, bigmeans, bigvars, bigivars)
+
 def hogg_savefig(fn):
     print("writing ", fn)
     return plt.savefig(fn)
 
 if __name__ == "__main__":
-    M, K, D = 4, 3, 2
-    ln_like = get_log_likelihood(M, K, D)
+    tM, tK, tD = 7, 5, 3
+    ln_prior = get_log_prior(tK * tD)
+    ln_like = get_log_likelihood(tM, tK, tD)
+    ln_post = ln_prior * ln_like # ARGH TERRIBLE TIMES
     xds = np.arange(-3., 3., 0.01)
-    xs = np.zeros((len(xds), K * D))
+    xs = np.zeros((len(xds), tK * tD))
     xs[:,0] = xds
-    ln_Ls = np.array([ln_like(x) for x in xs])
+    ln_ps1 = np.array([ln_prior(x) + ln_like(x) for x in xs])
+    ln_ps2 = np.array([ln_post(x) for x in xs])
     plt.clf()
-    plt.plot(xds, np.exp(ln_Ls - np.max(ln_Ls)), "k-")
+    plt.plot(xds, np.exp(ln_ps1 - np.max(ln_ps1)), "k-")
+    plt.plot(xds, np.exp(ln_ps2 - np.max(ln_ps1)), "r--")
     hogg_savefig("cd.png")
     for d in range(ln_like.D):
         ln_Ls = np.array([ln_like(x, d=d) for x in xds])
+        ln_ps = np.array([ln_post(x, d=d) for x in xds])
         plt.clf()
-        plt.plot(xds, np.exp(ln_Ls - np.max(ln_Ls)), "k-")
+        plt.plot(xds, np.exp(ln_ps - np.max(ln_ps)), "k-")
+        plt.plot(xds, np.exp(ln_Ls - np.max(ln_Ls)), "r--")
         hogg_savefig("cd{:04d}.png".format(d))
