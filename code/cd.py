@@ -216,6 +216,7 @@ if __name__ == "__main__":
         plt.plot(xds, np.exp(ln_Ls - np.max(ln_Ls)), "r--")
         hogg_savefig("cd{:04d}.png".format(d))
     samples = np.array([ln_post.draw_sample() for t in range(10000)])
-    print samples.shape
     figure = corner.corner(samples)
-    figure.savefig("corner.png")
+    cfn = "corner.png"
+    print("writing ", cfn)
+    figure.savefig(cfn)
