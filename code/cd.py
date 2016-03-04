@@ -65,7 +65,7 @@ class mixture_of_gaussians:
         multiply one by another!
 
         ## bugs:
-        - Not properly checked or tested.
+        - Only partially tested.
         """
         assert self.D == other.D
         newK = self.K * other.K
@@ -179,7 +179,7 @@ def get_log_prior(KD):
     """
     bigamps = np.ones((1,))
     bigmeans = np.ones((1, KD))
-    foo = 100.
+    foo = 1.
     bigvars = foo * np.eye(KD).reshape((1, KD, KD))
     bigivars = (1. / foo) * np.eye(KD).reshape((1, KD, KD))
     return mixture_of_gaussians(bigamps, bigmeans, bigvars, bigivars)
@@ -189,7 +189,7 @@ def hogg_savefig(fn):
     return plt.savefig(fn)
 
 if __name__ == "__main__":
-    tM, tK, tD = 7, 5, 3
+    tM, tK, tD = 7, 5, 6
     ln_prior = get_log_prior(tK * tD)
     ln_like = get_log_likelihood(tM, tK, tD)
     ln_post = ln_prior * ln_like # ARGH TERRIBLE TIMES
