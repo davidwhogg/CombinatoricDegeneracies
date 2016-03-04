@@ -12,7 +12,6 @@ Copyright 2016 David W. Hogg & Dan Foreman-Mackey.
 
 import itertools as it
 import numpy as np
-import pylab as plt
 from scipy.misc import logsumexp
 
 def factorial(N):
@@ -89,6 +88,10 @@ class mixture_of_gaussians:
                 + 0.5 * np.dot(newmeans[k], np.dot(newivars[k], newmeans[k]))
             newamps[k] = np.exp(newlogamp)
         return mixture_of_gaussians(newamps, newmeans, newvars, newivars)
+
+    def draw_sample(self):
+        k = np.random.randint(self.K)
+        return np.random.multivariate_normal(self.means[k], self.vars[k])
 
     def log_value(self, x):
         """
@@ -189,7 +192,10 @@ def hogg_savefig(fn):
     return plt.savefig(fn)
 
 if __name__ == "__main__":
-    tM, tK, tD = 7, 5, 6
+    import pylab as plt
+    import corner
+
+    tM, tK, tD = 5, 3, 2
     ln_prior = get_log_prior(tK * tD)
     ln_like = get_log_likelihood(tM, tK, tD)
     ln_post = ln_prior * ln_like # ARGH TERRIBLE TIMES
@@ -209,3 +215,7 @@ if __name__ == "__main__":
         plt.plot(xds, np.exp(ln_ps - np.max(ln_ps)), "k-")
         plt.plot(xds, np.exp(ln_Ls - np.max(ln_Ls)), "r--")
         hogg_savefig("cd{:04d}.png".format(d))
+    samples = np.array([ln_post.draw_sample() for t in range(10000)])
+    print samples.shape
+    figure = corner.corner(samples)
+    figure.savefig("corner.png")
