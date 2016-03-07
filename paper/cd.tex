@@ -1,0 +1,49 @@
+\documentclass[12pt, preprint]{aastex}
+\begin{document}
+
+\title{A toy problem for MCMC in the face of labeling degeneracies}
+\author{David~W.~Hogg\altaffilmark{1,2,3,4} \& Daniel Foreman-Mackey\altaffilmark{5,6}}
+\altaffiltext{1}{Simons Center for Data Analysis, 160 Fifth Avenue, 7th Floor, 
+                 New York, NY 10010, USA}
+\altaffiltext{2}{Center for Cosmology and Particle Physics, 
+                 Department of Physics, New York University, 4 Washington Pl., 
+                 room 424, New York, NY, 10003, USA}
+\altaffiltext{3}{Center for Data Science, New York University, 726 Broadway, 
+                 7th Floor, New York, NY 10003, USA}
+\altaffiltext{4}{Max-Planck-Institut f\"ur Astronomie, K\"onigstuhl 17, 
+                 D-69117 Heidelberg, Germany}
+\altaffiltext{5}{Sagan Fellow}
+\altaffiltext{6}{Department of Astronomy, University of Washington, Box 351580, Seattle, WA 98195, USA}
+
+\begin{abstract}
+Many inference problems in the natural sciences contain \emph{labeling
+  degeneracies}:
+A model contains some catalog of objects (exoplanets or gravitational
+chirps or neuron firings), and the model is invariant to reordering or
+re-labeling those objects in the catalog.
+This forces the investigator \emph{either} to force a deterministic
+ordering---which leads to informative, sharp edges in the prior---or else
+directly face a combinatorically large degeneracy in the likelihood
+function.
+Nonetheless, there are claims in the literature of converged MCMC
+samplings and accurate Bayesian evidence integral or fully
+marginalized likelihood (FML) calculations, for non-trivial problems
+of this type.
+Here we present a large family of toy problems that suffer from the
+labeling degeneracy but which can be sampled exactly (that is, with
+autocorrelation time of unity and without MCMC) and which have
+analytic marginalizations (including the FML).
+HOGG: We do SOMETHING and find SOMETHING.
+It is worthy of note that our toy problem is in general far simpler
+than most real inference problems that contain labeling degeneracies.
+\end{abstract}
+
+\keywords{
+  methods: statistical
+  ---
+  World: hello
+}
+
+Whatevs, the usual.
+
+\end{document}
