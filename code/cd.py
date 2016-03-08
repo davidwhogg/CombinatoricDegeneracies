@@ -118,6 +118,9 @@ class mixture_of_gaussians:
             vals[k] += -0.5 * delta * delta / self.vars[k, d, d]
         return logsumexp(vals)
 
+    def log_fully_marginalized_value(self):
+        return np.log(np.sum(self.amps))
+
     def __call__(self, x, d=None):
         if d is None:
             return self.log_value(x)
@@ -200,6 +203,7 @@ if __name__ == "__main__":
     ln_prior = get_log_prior(tK * tD)
     ln_like = get_log_likelihood(tM, tK, tD)
     ln_post = ln_prior * ln_like # ARGH TERRIBLE TIMES
+    print("FML:", np.exp(ln_post.log_fully_marginalized_value() - ln_prior.log_fully_marginalized_value()))
     xds = np.arange(-3., 3., 0.01)
     xs = np.zeros((len(xds), tK * tD))
     xs[:,0] = xds
