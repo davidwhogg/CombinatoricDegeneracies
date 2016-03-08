@@ -1,3 +1,16 @@
+% This file is part of the CombinatoricDegeneracies project.
+% Copyright 2016 the authors.
+
+% # to-do:
+% - draft introduction
+% - draft model section
+% - perform experiments
+% - draft experiment section
+% - draft discussion
+% - add keywords
+% - post on arXiv
+% - submit somewhere?
+
 \documentclass[12pt, preprint]{aastex}
 \begin{document}
 
@@ -17,7 +30,8 @@
 
 \begin{abstract}
 Many inference problems in the natural sciences contain \emph{labeling
-  degeneracies}:
+  degeneracies} (the label-switching problem or label
+non-identifiability):
 A model contains some catalog of objects (exoplanets or gravitational
 chirps or neuron firings), and the model is invariant to reordering or
 re-labeling those objects in the catalog.
@@ -33,17 +47,41 @@ Here we present a large family of toy problems that suffer from the
 labeling degeneracy but which can be sampled exactly (that is, with
 autocorrelation time of unity and without MCMC) and which have
 analytic marginalizations (including the FML).
+These toy problems can be used to test MCMC (or other) methods for
+performing integrations in the face of these degeneracies.
 HOGG: We do SOMETHING and find SOMETHING.
 It is worthy of note that our toy problem is in general far simpler
 than most real inference problems that contain labeling degeneracies.
 \end{abstract}
 
-\keywords{
-  methods: statistical
-  ---
-  World: hello
-}
+\section{Introduction}
 
-Whatevs, the usual.
+Many problems have combinatoric labeling degeneracies.
+
+You can deal with these by brute force.  Or you can deal with them by
+forcing a deterministic ordering.  The first is impossible and the
+second is impossible.
+
+Many claims exist that people can sample in these problems.
+
+One interesting point is that you don't necessarily need to sample all
+the combinatoric modes; you just need to sample such that all relevant
+scientific integrals are okay.
+
+Of course if you want the FML, you are effed.
+
+\section{Model}
+
+\section{Experiments}
+
+\section{Discussion}
+
+\acknowledgments
+It is a pleasure to thank
+  Alex Barnett (SCDA),
+  Brendon J. Brewer (Auckland),
+  and
+  Jonathan Goodman (NYU)
+for valuable discussions and help.
 
 \end{document}
