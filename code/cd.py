@@ -8,6 +8,7 @@ Copyright 2016 David W. Hogg & Dan Foreman-Mackey.
 
 # notes / bugs:
 - The zero covariance across modes (block-diagonality) is baked-in.
+- The `draw_sample()` code is unnecessarily slow.
 """
 
 import itertools as it
@@ -90,6 +91,9 @@ class mixture_of_gaussians:
         return mixture_of_gaussians(newamps, newmeans, newvars, newivars)
 
     def draw_sample(self):
+        """
+        This could be sped up by saving a factorization of the `self.vars`.
+        """
         k = np.random.randint(self.K)
         return np.random.multivariate_normal(self.means[k], self.vars[k])
 
@@ -126,7 +130,7 @@ class mixture_of_gaussians:
             return self.log_value(x)
         return self.log_marginalized_value(d, x)
 
-def get_log_likelihood(M, K, D, ivar_scale=256., ndof=None):
+def get_log_likelihood(M, K, D, precision=256., ndof=None):
     """
     Build a log likelihood function for a problem with `K` pigeons,
     each of which gets put in one of `M` holes, each of which has `D`
@@ -156,9 +160,10 @@ def get_log_likelihood(M, K, D, ivar_scale=256., ndof=None):
         ndof = D + 2 # MAGIC
     for m in range(M):
         vecs = np.random.normal(size=(ndof, D)) # more MAGIC
-        vars[m] = (1. / ivar_scale) * np.mean(vecs[:, :, None] * vecs[:, None, :], axis=0)
+        vars[m] = (1. / precision) * np.mean(vecs[:, :, None] * vecs[:, None, :], axis=0) # mean not sum
         ivars[m] = np.linalg.inv(vars[m])
         ivars[m] = 0.5 * (ivars[m] + ivars[m].T) # symmetrize
+        assert np.allclose(np.dot(ivars[m], vars[m]), np.eye(D))
 
     # create mixture of M-choose-K times K! Gaussians (OMG!)
     Kfac = factorial(K)
@@ -199,9 +204,9 @@ if __name__ == "__main__":
     import corner
 
     np.random.seed(42)
-    tM, tK, tD = 7, 5, 6
+    tM, tK, tD = 7, 5, 2
     ln_prior = get_log_prior(tK * tD)
-    ln_like = get_log_likelihood(tM, tK, tD)
+    ln_like = get_log_likelihood(tM, tK, tD, precision=4.)
     ln_post = ln_prior * ln_like # ARGH TERRIBLE TIMES
     print("FML:", np.exp(ln_post.log_fully_marginalized_value() - ln_prior.log_fully_marginalized_value()))
     xds = np.arange(-3., 3., 0.01)
