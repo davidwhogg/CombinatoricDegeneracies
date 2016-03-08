@@ -195,7 +195,8 @@ if __name__ == "__main__":
     import pylab as plt
     import corner
 
-    tM, tK, tD = 5, 3, 2
+    np.random.seed(42)
+    tM, tK, tD = 7, 5, 6
     ln_prior = get_log_prior(tK * tD)
     ln_like = get_log_likelihood(tM, tK, tD)
     ln_post = ln_prior * ln_like # ARGH TERRIBLE TIMES
